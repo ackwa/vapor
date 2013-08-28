@@ -17,7 +17,7 @@ This is MODX Vapor, a PHP script for Extracting a complete snapshot of a MODX si
 
 ## Usage
 
-MODX Vapor can be run from the CLI or from a web browser. It is recommended that it be run from CLI if possible however, to avoid potential issues with web server and/or PHP-related timeouts. This is especially true for larger MODX sites. In either case, the snapshot will be created in your `MODX_CORE_PATH . 'packages/'` directory with the snapshot name indicated in the output from the script.
+MODX Vapor can be run from the CLI or from a web browser. It is **recommended that it be run from CLI** if possible however, to avoid potential issues with web server and/or PHP-related timeouts. This is especially true for larger MODX sites. In either case, the snapshot will be created in your `MODX_CORE_PATH . 'packages/'` directory with the snapshot name indicated in the output from the script.
 
 ### Running via CLI
 
@@ -60,4 +60,4 @@ Each time you run vapor it will log information about it's execution into a file
 
 ## Copyright
 
-MODX Vapor is Copyright 2012 by MODX, LLC.
+MODX Vapor is Copyright 2012-2013 by MODX, LLC.

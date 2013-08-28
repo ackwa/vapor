@@ -1,5 +1,11 @@
 # MODX Vapor Changelog
 
+## 1.0.1-beta-1 (August 28, 2013) by @ackwa
+
+- Add configuration checks to avoid some problems : PHP, SAPI, Permissions, Zip...
+- Export manager/components directory
+- Add some logs to help debugging
+
 ## 1.0.0-pl (October 30, 2012)
 
 - Fix missing table truncation script when no extension_packages setting exists

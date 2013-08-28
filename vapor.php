@@ -20,6 +20,8 @@
 $startTime = microtime(true);
 define('VAPOR_DIR', realpath(dirname(__FILE__)) . '/');
 define('VAPOR_VERSION', '1.1.0-dev');
+$done = false;
+register_shutdown_function('shutdown');
 try {
     $vaporOptions = array(
         'excludeExtraTablePrefix' => array(),
@@ -104,6 +106,47 @@ try {
     $workspace = $modx->getObject('modWorkspace', 1);
     if (!$workspace) {
         $modx->log(modX::LOG_LEVEL_FATAL, "no workspace!");
+    }
+
+    /* Keep in mind... */
+    echo 'KEEP IN MIND to check Vapor log for detail info, warning, error... : '.MODX_CORE_PATH.'cache/logs/'.$options['log_target']['options']['filename']."\n";
+
+    /* Emulate PHP_VERSION_ID */
+    if (!defined('PHP_VERSION_ID')) {
+       $version = explode('.',PHP_VERSION);
+       define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+    }
+
+    /* Check configuration : PHP Version */
+    $modx->log(modX::LOG_LEVEL_INFO, 'PHP '.phpversion().' / '.php_sapi_name().' on '.$modx->getOption('http_host'));
+    if (PHP_VERSION_ID < 50200) {
+        $msg  = 'Invalid PHP version : '.phpversion().', PHP 5.2+ needed.';
+        $modx->log(modX::LOG_LEVEL_INFO, $msg); // MODX_LOG_LEVEL_WARN fait "planter" certaines version de PHP (ex. PHP/5.3.8-pl0-gentoo en mode CGI)
+        exit("$msg\n");
+    }
+
+    /* Check configuration : CLI for command line execution */
+    if (empty($_SERVER['REMOTE_ADDR']) && !('cli' == php_sapi_name())) {
+        $msg  = 'Invalid SAPI version : '.php_sapi_name().', CLI needed for command line execution.';
+        $modx->log(modX::LOG_LEVEL_INFO, $msg);
+        exit("$msg\n");
+    }
+
+    /* Check permission */
+    if (!(('cli' == php_sapi_name()) || $modx->user->isMember('Administrator') || $modx->user->get('sudo'))) {
+        $msg = 'You need to have Administrator permission if you want a valid package.';
+        $modx->log(modX::LOG_LEVEL_INFO, $msg);
+        exit("$msg\n");
+    }
+
+    /* Zip Extension */
+    if (!class_exists('ZipArchive')) {
+        $modx->log(modX::LOG_LEVEL_INFO, 'Zip extension not installed. Archiving with PclZip can be VERY slow.');
+    }
+
+    /* Safe mode */
+    if (ini_get('safe_mode')) {
+        $modx->log(modX::LOG_LEVEL_INFO, 'In safe mode we can\'t change the maximum execution time. Timeout may occur.');
     }
 
     if (!defined('PKG_NAME')) define('PKG_NAME', str_replace(array('-', '.'), array('_', '_'), $modx->getOption('http_host', $options, 'vapor_export')));
@@ -194,12 +237,23 @@ try {
         'vehicle_class' => 'xPDOFileVehicle'
     );
 
-    /* get all files from the components directory */
+    /* get all files from the core components directory */
     $modx->log(modX::LOG_LEVEL_INFO, "Packaging " . MODX_CORE_PATH . 'components');
     $package->put(
         array(
             'source' => MODX_CORE_PATH . 'components',
             'target' => 'return MODX_CORE_PATH;'
+        ),
+        array(
+            'vehicle_class' => 'xPDOFileVehicle'
+        )
+    );
+    /* get all files from the manager components directory */
+    $modx->log(modX::LOG_LEVEL_INFO, "Packaging " . MODX_MANAGER_PATH . 'components');
+    $package->put(
+        array(
+            'source' => MODX_MANAGER_PATH . 'components',
+            'target' => 'return MODX_MANAGER_PATH;'
         ),
         array(
             'vehicle_class' => 'xPDOFileVehicle'
@@ -559,11 +613,12 @@ try {
             }
         }
     }
-
+    
     if (!ini_get('safe_mode')) {
         set_time_limit(0);
     }
 
+    $modx->log(modX::LOG_LEVEL_INFO, 'Start packaging data. Be patient...');
     if (!$package->pack()) {
         $message = "Error extracting package, could not pack transport: {$package->signature}";
         $modx->log(modX::LOG_LEVEL_ERROR, $message);
@@ -585,4 +640,13 @@ try {
     }
     printf("Vapor execution completed with exception in %2.4fs\n", $endTime - $startTime);
 }
+$done = true;
 printf("Vapor execution completed without exception in %2.4fs\n", $endTime - $startTime);
+
+/* The end */
+function shutdown() {
+    global $modx, $startTime, $done;
+    
+    $endTime = microtime(true);
+    $modx->log(modX::LOG_LEVEL_INFO, sprintf('Vapor execution stop after %2.4fs. Completed status is %s', ($endTime - $startTime), ($done ? 'OK' : 'KO')));
+}
