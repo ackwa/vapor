@@ -34,9 +34,22 @@ try {
             $vaporOptions = array_merge($vaporOptions, $vaporConfigOptions);
         }
     }
-    include dirname(dirname(__FILE__)) . '/config.core.php';
-    include MODX_CORE_PATH . 'model/modx/modx.class.php';
-
+    /* We need to check for MODX code Here! */
+    if (is_readable(dirname(dirname(__FILE__)) . '/config.core.php')) {
+    	include dirname(dirname(__FILE__)) . '/config.core.php';
+    	if (defined(MODX_CORE_PATH) && is_readable(MODX_CORE_PATH . 'model/modx/modx.class.php')) {
+    		include MODX_CORE_PATH . 'model/modx/modx.class.php';
+    	}
+    	else {
+    		$msg  = 'Cannot find your MODX configuration!';
+    		exit("$msg\n");
+    	}
+    }
+    else {
+    	$msg  = 'Cannot find your MODX configuration!';
+    	exit("$msg\n");
+    }
+    
     if (!ini_get('safe_mode')) {
         set_time_limit(0);
     }
@@ -648,5 +661,5 @@ function shutdown() {
     global $modx, $startTime, $done;
     
     $endTime = microtime(true);
-    $modx->log(modX::LOG_LEVEL_INFO, sprintf('Vapor execution stop after %2.4fs. Completed status is %s', ($endTime - $startTime), ($done ? 'OK' : 'KO')));
+    if ($modx) $modx->log(modX::LOG_LEVEL_INFO, sprintf('Vapor execution stop after %2.4fs. Completed status is %s', ($endTime - $startTime), ($done ? 'OK' : 'KO')));
 }
