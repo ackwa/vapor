@@ -37,16 +37,16 @@ try {
     /* We need to check for MODX code Here! */
     if (is_readable(dirname(dirname(__FILE__)) . '/config.core.php')) {
     	include dirname(dirname(__FILE__)) . '/config.core.php';
-    	if (defined(MODX_CORE_PATH) && is_readable(MODX_CORE_PATH . 'model/modx/modx.class.php')) {
+    	if ((defined(MODX_CORE_PATH) || MODX_CORE_PATH) && is_readable(MODX_CORE_PATH . 'model/modx/modx.class.php')) {
     		include MODX_CORE_PATH . 'model/modx/modx.class.php';
     	}
     	else {
-    		$msg  = 'Cannot find your MODX configuration!';
+    		$msg  = 'Cannot find your MODX core class as "['.MODX_CORE_PATH . ']model/modx/modx.class.php'.'"!';
     		exit("$msg\n");
     	}
     }
     else {
-    	$msg  = 'Cannot find your MODX configuration!';
+    	$msg  = 'Cannot find your MODX configuration as "['.(dirname(dirname(__FILE__)) . ']/config.core.php').'"!';
     	exit("$msg\n");
     }
     
@@ -103,6 +103,8 @@ try {
     $modx->log(modX::LOG_LEVEL_INFO, "Vapor version: " . VAPOR_VERSION);
     $modx->log(modX::LOG_LEVEL_INFO, "Vapor options: " . print_r($vaporOptions, true));
     $modx->log(modX::LOG_LEVEL_INFO, "PHP version: " . PHP_VERSION);
+    $modx->log(modX::LOG_LEVEL_INFO, "PHP SAPI: " . php_sapi_name());
+    $modx->log(modX::LOG_LEVEL_INFO, "Remote: " . $_SERVER['REMOTE_ADDR']);
 
     $modx->log(modX::LOG_LEVEL_INFO, "MODX core version: " . $modxVersion);
     $modx->log(modX::LOG_LEVEL_INFO, "MODX settings_version: " . $modxSettingsVersion);
@@ -122,6 +124,7 @@ try {
     }
 
     /* Keep in mind... */
+    echo (('cli' == php_sapi_name()) ? '' : '<pre>');
     echo 'KEEP IN MIND to check Vapor log for detail info, warning, error... : '.MODX_CORE_PATH.'cache/logs/'.$options['log_target']['options']['filename']."\n";
 
     /* Emulate PHP_VERSION_ID */
@@ -661,5 +664,7 @@ function shutdown() {
     global $modx, $startTime, $done;
     
     $endTime = microtime(true);
-    if ($modx) $modx->log(modX::LOG_LEVEL_INFO, sprintf('Vapor execution stop after %2.4fs. Completed status is %s', ($endTime - $startTime), ($done ? 'OK' : 'KO')));
+    $msg     = sprintf('Vapor execution stop after %2.4fs. Completed status is %s', ($endTime - $startTime), ($done ? 'OK' : 'KO!!!'));
+    if ($modx) $modx->log(modX::LOG_LEVEL_INFO, $msg);
+    echo $msg."\n";
 }
