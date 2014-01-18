@@ -104,8 +104,8 @@ try {
     $modx->log(modX::LOG_LEVEL_INFO, "Vapor options: " . print_r($vaporOptions, true));
     $modx->log(modX::LOG_LEVEL_INFO, "PHP version: " . PHP_VERSION);
     $modx->log(modX::LOG_LEVEL_INFO, "PHP SAPI: " . php_sapi_name());
-    $modx->log(modX::LOG_LEVEL_INFO, "Remote: " . $_SERVER['REMOTE_ADDR']);
-
+    $modx->log(modX::LOG_LEVEL_INFO, "Remote: " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'n/a'));
+    
     $modx->log(modX::LOG_LEVEL_INFO, "MODX core version: " . $modxVersion);
     $modx->log(modX::LOG_LEVEL_INFO, "MODX settings_version: " . $modxSettingsVersion);
     $modx->log(modX::LOG_LEVEL_INFO, "MODX settings_distro: " . $modxSettingsDistro);
@@ -265,16 +265,18 @@ try {
         )
     );
     /* get all files from the manager components directory */
-    $modx->log(modX::LOG_LEVEL_INFO, "Packaging " . MODX_MANAGER_PATH . 'components');
-    $package->put(
-        array(
-            'source' => MODX_MANAGER_PATH . 'components',
-            'target' => 'return MODX_MANAGER_PATH;'
-        ),
-        array(
-            'vehicle_class' => 'xPDOFileVehicle'
-        )
-    );
+    if (is_readable(MODX_MANAGER_PATH . 'components')) {
+        $modx->log(modX::LOG_LEVEL_INFO, "Packaging " . MODX_MANAGER_PATH . 'components');
+        $package->put(
+            array(
+                'source' => MODX_MANAGER_PATH . 'components',
+                'target' => 'return MODX_MANAGER_PATH;'
+            ),
+            array(
+                'vehicle_class' => 'xPDOFileVehicle'
+            )
+        );
+    }
     /* get all files from the assets directory */
     $modx->log(modX::LOG_LEVEL_INFO, "Packaging " . MODX_BASE_PATH . 'assets');
     $package->put(
@@ -438,7 +440,7 @@ try {
                     if ($package->put($object, $classAttributes)) {
                         $instances++;
                     } else {
-                        $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey()));
+                        $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey(), true));
                     }
                 }
                 $modx->log(modX::LOG_LEVEL_INFO, "Packaged {$instances} of {$class}");
@@ -469,7 +471,7 @@ try {
                         if ($package->put($object, $classAttributes)) {
                             $instances++;
                         } else {
-                            $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey()));
+                            $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey(), true));
                         }
                     }
                 }
@@ -516,7 +518,7 @@ try {
                     if ($package->put($object, $classAttributes)) {
                         $instances++;
                     } else {
-                        $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey()));
+                        $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey(), true));
                     }
                 }
                 $modx->log(modX::LOG_LEVEL_INFO, "Packaged {$instances} of {$class}");
@@ -529,7 +531,7 @@ try {
             if ($package->put($object, $classAttributes)) {
                 $instances++;
             } else {
-                $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey()));
+                $modx->log(modX::LOG_LEVEL_WARN, "Could not package {$class} instance with pk: " . print_r($object->getPrimaryKey(), true));
             }
         }
         $modx->log(modX::LOG_LEVEL_INFO, "Packaged {$instances} of {$class}");
